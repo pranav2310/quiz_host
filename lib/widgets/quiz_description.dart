@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quiz_host/models/quiz.dart';
 import 'dart:html' as html;
 String? hostname = html.window.location.hostname ?? 'localhost'; // e.g., 'your-app.vercel.app'
-String protocol = html.window.location.protocol ?? 'http'; // 'https:' (for scheme)
+String protocol = html.window.location.protocol.replaceAll(':', ''); // 'https:' (for scheme)
 String port = html.window.location.port ?? '57999'; // often '' (empty) for 443/80
 
 // If port is empty, DON'T include it in the generated link URI.
@@ -44,7 +44,7 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription>{
       final link = Uri(
         scheme: protocol,
         host: hostname,
-        port: hostname!='localhost'? int.tryParse(port):null,
+        port: int.tryParse(port),
         path: '/',
         fragment: '/quiz/$quizId?token=$token',
       ).toString();
