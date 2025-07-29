@@ -44,7 +44,7 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription>{
       final link = Uri(
         scheme: protocol,
         host: hostname,
-        port: int.tryParse(port),
+        // port: int.tryParse(port),
         path: '/',
         fragment: '/quiz/$quizId?token=$token',
       ).toString();

@@ -5,10 +5,6 @@ import 'package:quiz_host/models/quiz.dart';
 import 'package:quiz_host/screens/quiz_screen.dart';
 import 'screens/home_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:html' as html;
-
-String hostname = html.window.location.hostname ?? 'localhost'; // e.g. 'localhost'
-String port = html.window.location.port ?? '57999'; // e.g. '57999'
 
 void main(){
   runApp(
