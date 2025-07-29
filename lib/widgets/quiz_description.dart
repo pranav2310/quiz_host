@@ -5,9 +5,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quiz_host/models/quiz.dart';
 import 'dart:html' as html;
+String? hostname = html.window.location.hostname; // e.g., 'your-app.vercel.app'
+String protocol = html.window.location.protocol; // 'https:' (for scheme)
+String port = html.window.location.port; // often '' (empty) for 443/80
 
-String hostname = html.window.location.hostname ?? 'localhost'; // e.g. 'localhost'
-int port = int.tryParse(html.window.location.port) ?? 57999; // e.g. '57999'
+// If port is empty, DON'T include it in the generated link URI.
+
 
 
 class QuizDescription extends ConsumerStatefulWidget{
@@ -39,9 +42,9 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription>{
       String token = _randomToken();
       final quizId = widget.selectedQuiz.quizId;
       final link = Uri(
-        scheme: 'http',
+        scheme: protocol,
         host: hostname,
-        port: port,
+        port: int.tryParse(port),
         path: '/',
         fragment: '/quiz/$quizId?token=$token',
       ).toString();
