@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quiz_host/models/quiz.dart';
 import 'dart:html' as html;
+
+import 'package:quiz_host/screens/quiz_screen.dart';
 String? hostname = html.window.location.hostname ?? 'localhost'; // e.g., 'your-app.vercel.app'
 String protocol = html.window.location.protocol.replaceAll(':', ''); // 'https:' (for scheme)
 String port = html.window.location.port ?? '57999'; // often '' (empty) for 443/80
@@ -61,7 +63,9 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription>{
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     selectedQuiz.quizTitle,
@@ -88,7 +92,13 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription>{
                       onTap: () => Clipboard.setData(ClipboardData(text: _linkToQuiz!)),
                     ),
                     const SizedBox(height: 20),
-                    ElevatedButton.icon(onPressed: (){Clipboard.setData(ClipboardData(text: _linkToQuiz!));}, icon: Icon(Icons.copy),label: Text('Copy Link'),),
+                    Row(
+                      children: [
+                        ElevatedButton(onPressed:(){Navigator.of(context).push(MaterialPageRoute(builder: (context)=>QuizScreen(quizId: widget.selectedQuiz.quizId, token: 'adsaw')));},child: Text('Go To Quiz'),),
+                        const SizedBox(width: 16,),
+                        ElevatedButton.icon(onPressed: (){Clipboard.setData(ClipboardData(text: _linkToQuiz!));}, icon: Icon(Icons.copy),label: Text('Copy Link'),),
+                      ],
+                    ),
                   ],
                   const SizedBox(height: 20),
                   Text('Leaderboard',style: Theme.of(context).textTheme.titleMedium?.copyWith(

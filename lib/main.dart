@@ -23,11 +23,6 @@ final GoRouter router = GoRouter(
       builder: (context, state){
         final quizId = state.pathParameters['quizId'];
         final token = state.uri.queryParameters['token'];
-        if (quizId==null || dummyQuizzes.firstWhere((quiz) => quiz.quizId == quizId)==null || token == null){
-          return Scaffold(
-            body: Center(child: Text('Quiz not found')),
-          );
-        }
         return QuizScreen(quizId: quizId!, token: token!);
       },
     )
