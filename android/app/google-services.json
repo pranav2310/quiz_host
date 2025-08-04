@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "152357187715",
+    "firebase_url": "https://iocl-quiz-host-default-rtdb.firebaseio.com",
+    "project_id": "iocl-quiz-host",
+    "storage_bucket": "iocl-quiz-host.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:152357187715:android:f42d3144b35079b2a7ebb6",
+        "android_client_info": {
+          "package_name": "com.example.quiz_host"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDci6RTxb71Dh4xkqc5pCaCMOef9AW3cDw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,30 @@
+{
+    "flutter":{
+        "platforms":{
+            "android":{
+                "default":{
+                    "projectId":"iocl-quiz-host",
+                    "appId":"1:152357187715:android:f42d3144b35079b2a7ebb6",
+                    "fileOutput":"android/app/google-services.json"
+                }
+            },
+            "ios":{
+                "default":{
+                    "projectId":"iocl-quiz-host",
+                    "appId":"1:152357187715:ios:0b97e971fba4424fa7ebb6",
+                    "uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"
+                }
+            },
+            "dart":{
+                "lib/firebase_options.dart":{
+                    "projectId":"iocl-quiz-host",
+                    "configurations":{
+                        "android":"1:152357187715:android:f42d3144b35079b2a7ebb6",
+                        "ios":"1:152357187715:ios:0b97e971fba4424fa7ebb6",
+                        "web":"1:152357187715:web:284ee39879368f6ea7ebb6"
+                    }
+                }
+            }
+        }
+    }
+}
