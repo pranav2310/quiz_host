@@ -53,6 +53,7 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription>{
     if(existingSessionId != null){
       Navigator.of(context).push(MaterialPageRoute(
       builder: (ctx)=>QuizScreen(
+        playerId: 'host01',
         sessionId: existingSessionId!,
         isHost: true,
       )));
@@ -68,7 +69,7 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription>{
       sessionCreationUrl,
       body:json.encode({
         'sessionId': sessionId,
-        'hostId': 'host-${widget.selectedQuiz.quizId}',
+        'hostId': widget.hostId,
         'quizId': widget.selectedQuiz.quizId,
         'currentQuestion': 0,
         'state': 'waiting',
@@ -81,10 +82,12 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription>{
     }
     Navigator.of(context).push(MaterialPageRoute(
       builder: (ctx)=>QuizScreen(
+        playerId: 'host01',
         sessionId: sessionId,
         isHost: true,
       )));
   }
+  bool showAnswers = false;
   @override
   Widget build(BuildContext context) {
     final selectedQuiz = widget.selectedQuiz;
@@ -93,62 +96,127 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription>{
           return SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Column(
-                // mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    selectedQuiz.quizTitle,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      // fontSize: (24 * (constraints.maxWidth / 160)).clamp(20.0, 32.0),
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _hostQuiz, 
-                    child: Text('Host Quiz'),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Questions',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      // fontSize: (20 * (constraints.maxWidth / 160)).clamp(16.0, 28.0),
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                  ListView.builder(itemBuilder: (ctx, idx){
-                    final question = selectedQuiz.questions[idx];
-                    return Card(
-                      margin: EdgeInsets.symmetric(vertical: 6.0),
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(12, 12, 12, 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            for(int opIdx=0; opIdx<question.options.length;opIdx++)
-                              Padding(
-                                padding: EdgeInsets.only(left: 8,bottom: 4),
-                                child: Text(
-                                  question.options[opIdx],
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: opIdx==0?Colors.green:Theme.of(context).colorScheme.onSurface,
-                                    fontWeight: opIdx==0?FontWeight.bold:FontWeight.normal
-                                  ),
-                                ),
-                              )
-                          ],
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Center(
+                      child: Text(
+                        selectedQuiz.quizTitle,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontWeight: FontWeight.bold
                         ),
                       ),
-                    );
-                  }, 
-                    itemCount: selectedQuiz.questions.length,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                  ),
-                  // Additional content for the selected quiz can go here
-                ],
+                    ),
+                    const SizedBox(height: 20),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        ElevatedButton.icon(
+                          icon: Icon(Icons.play_arrow),
+                          onPressed: _hostQuiz, 
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).colorScheme.secondary,
+                            foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                            padding: const EdgeInsets.symmetric(
+                            vertical: 14, horizontal: 24),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                          ),
+                          label: Text('Host Quiz'),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          icon: Icon(showAnswers? Icons.visibility_off : Icons.visibility),
+                          onPressed: (){
+                            setState(() {
+                              showAnswers=!showAnswers;
+                            });
+                          }, 
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).colorScheme.secondary,
+                            foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                            padding: const EdgeInsets.symmetric(
+                            vertical: 14, horizontal: 24),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                          ),
+                          label: Text(showAnswers ?'Hide Answers' :'Show Answers'),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          icon: Icon(Icons.edit),
+                          onPressed: (){}, 
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).colorScheme.secondary,
+                            foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                            padding: const EdgeInsets.symmetric(
+                            vertical: 14, horizontal: 24),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                          ),
+                          label: Text('Edit Quiz'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Questions',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    ListView.builder(itemBuilder: (ctx, idx){
+                      final question = selectedQuiz.questions[idx];
+                      return Card(
+                        elevation: 3,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        margin: EdgeInsets.symmetric(vertical: 6.0),
+                        child: Padding(
+                          padding: EdgeInsets.fromLTRB(12, 12, 12, 8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(question.questionText, style:Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.bold
+                              )),
+                              for(int opIdx=0; opIdx<question.options.length;opIdx++)
+                                Padding(
+                                  padding: EdgeInsets.only(left: 8,bottom: 4),
+                                  child: Text(
+                                    question.options[opIdx],
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: (opIdx==0 && showAnswers)?
+                                        Colors.green:
+                                        Theme.of(context).colorScheme.onSurface,
+                                      fontWeight: (opIdx==0 && showAnswers)?FontWeight.bold:FontWeight.normal
+                                    ),
+                                  ),
+                                )
+                            ],
+                          ),
+                        ),
+                      );
+                    }, 
+                      itemCount: selectedQuiz.questions.length,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                    ),
+                    // Additional content for the selected quiz can go here
+                  ],
+                ),
               ),
             ),
           );

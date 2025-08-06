@@ -92,16 +92,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('The Quiz Code doesnt exist Enter Valid Quiz Code')));
         return;
       }
-      final playerId = DateTime.now().millisecondsSinceEpoch.toString();
       final playerUrl = Uri.https(
         'iocl-quiz-host-default-rtdb.firebaseio.com',
-        'session/$_quizCode/players/$playerId.json'
+        'session/$_quizCode/players/$_empId.json'
       );
       final addPlayerResponse = await http.put(
         playerUrl,
         body: json.encode({
-          'id':playerId,
-          'ioclempId':_empId,
+          'id':_empId,
           'name':_playerName,
           'score':0
         }),
@@ -119,6 +117,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       });
       Navigator.of(context).pushReplacement(MaterialPageRoute(
         builder: (ctx)=>QuizScreen(
+          playerId : _empId,
           sessionId: _quizCode, 
           isHost: false
         )

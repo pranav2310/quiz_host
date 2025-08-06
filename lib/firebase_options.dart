@@ -48,7 +48,7 @@ class DefaultFirebaseOptions {
   }
 
   static FirebaseOptions  get web => FirebaseOptions(
-    apiKey: dotenv.env['API_KEY_FIREBASE_WEB']!,
+    apiKey: const String.fromEnvironment('API_KEY_FIREBASE_WEB'),
     appId: '1:152357187715:web:284ee39879368f6ea7ebb6',
     messagingSenderId: '152357187715',
     projectId: 'iocl-quiz-host',

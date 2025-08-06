@@ -9,10 +9,12 @@ class MainArea extends ConsumerStatefulWidget{
   const MainArea({
     super.key,
     required this.hostId,
-    required this.quizList
+    required this.quizList,
+    required this.onQuizAdded
   });
   final String hostId;
   final List<Quiz> quizList;
+  final VoidCallback onQuizAdded;
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() {
@@ -28,7 +30,7 @@ class _MainAreaState extends ConsumerState<MainArea>{
     return Container(
       color: Theme.of(context).colorScheme.surface,
       child: selectedQuiz == null ?
-      NewQuiz(hostId: widget.hostId,):
+      NewQuiz(hostId: widget.hostId,onQuizAdded:widget.onQuizAdded):
       QuizDescription(
         hostId: widget.hostId,
         selectedQuiz: selectedQuiz,

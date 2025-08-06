@@ -10,6 +10,19 @@ class Waiting extends StatelessWidget{
   final String sessionId;
   final bool isHost;
 
+  void _startQuiz(BuildContext context){
+    final ref = FirebaseDatabase.instance.ref('session/$sessionId');
+    try{
+      ref.update({
+        'currentQuestion' : 0,
+        'state':'displayQuestion'
+      });
+    }
+    catch(e){
+      throw Exception('Failed to Start Quiz');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final ref = FirebaseDatabase.instance.ref('session/$sessionId');
@@ -19,10 +32,14 @@ class Waiting extends StatelessWidget{
       ),
       child: Column(
         children: [
-          Text(
-            'Waiting for Players to join',
-            style: Theme.of(context).textTheme.headlineLarge!.copyWith(color: Theme.of(context).colorScheme.onSecondary),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              'Waiting for Players to join',
+              style: Theme.of(context).textTheme.headlineLarge!.copyWith(color: Theme.of(context).colorScheme.onSecondary),
+            ),
           ),
+          const SizedBox(height: 16,),
           Expanded(
             child: StreamBuilder(
               stream: ref.onValue, 
@@ -38,42 +55,53 @@ class Waiting extends StatelessWidget{
                 }
                 final playersMap = Map<String, dynamic>.from(playersRaw as Map);
                 final playerNames = playersMap.values.map((player)=>player['name'].toString()).toList();
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Number of Players joined: ${playerNames.length}',
-                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                        color: Theme.of(context).colorScheme.onSecondary
-                      ),
-                    ),
-                    const SizedBox(height: 12,),
-                    Flexible(
-                      child: GridView.builder(
-                        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 200,
-                          mainAxisSpacing: 10,
-                          crossAxisSpacing: 10,
-                          childAspectRatio: 3
+                return Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if(isHost)Center(
+                        child: ElevatedButton(
+                          onPressed: (){
+                            _startQuiz(context);
+                          }, 
+                          child: Text('Start Quiz',style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),)
                         ),
-                        itemCount: playerNames.length, 
-                        itemBuilder: (context, idx){
-                          return Card(
-                            color: Theme.of(context).colorScheme.primary,
-                            child: Center(
-                              child: Text(
-                                playerNames[idx],
-                                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurface,
-                                  fontWeight: FontWeight.bold
-                                ),
-                              ),
-                            ));
-                        }
                       ),
-                    )
-                      
-                  ],
+                      Text(
+                        'Number of Players joined: ${playerNames.length}',
+                        style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                          color: Theme.of(context).colorScheme.onSecondary
+                        ),
+                      ),
+                      const SizedBox(height: 12,),
+                      Flexible(
+                        child: GridView.builder(
+                          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 200,
+                            mainAxisSpacing: 10,
+                            crossAxisSpacing: 10,
+                            childAspectRatio: 3
+                          ),
+                          itemCount: playerNames.length, 
+                          itemBuilder: (context, idx){
+                            return Card(
+                              color: Theme.of(context).colorScheme.primary,
+                              child: Center(
+                                child: Text(
+                                  playerNames[idx],
+                                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                    fontWeight: FontWeight.bold
+                                  ),
+                                ),
+                              ));
+                          }
+                        ),
+                      )
+                        
+                    ],
+                  ),
                 );
               }),
           )

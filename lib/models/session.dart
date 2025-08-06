@@ -63,12 +63,10 @@ enum ActivityStatus{
 
 class Player{
   final String id;
-  final String ioclempId;
   final String name;
   final int score;
   Player({
     required this.id,
-    required this.ioclempId,
     required this.name,
     this.score = 0
   });
@@ -76,7 +74,6 @@ class Player{
   Map<String,dynamic> toJson(){
     return {
       'id':id,
-      'ioclempId':ioclempId,
       'name':name,
       'score':score
     };
@@ -85,7 +82,6 @@ class Player{
   factory Player.fromJson(Map<String, dynamic> json){
     return Player(
       id: json['id'], 
-      ioclempId: json['ioclempId'], 
       name: json['name'], 
       score: json['score'] ?? 0
     );

@@ -18,7 +18,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Future<List<Quiz>> loadQuizzes() async {
     final quizListUrl = Uri.https(
       'iocl-quiz-host-default-rtdb.firebaseio.com',
-      'quiz-list-${widget.hostId}.json',
+      'quiz-list/${widget.hostId}.json',
     );
     final response = await http.get(quizListUrl);
 
@@ -43,6 +43,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.initState();
   }
 
+  void reloadQuizzes() {
+    setState(() {
+      _quizList = loadQuizzes();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,14 +63,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         //   return Scaffold(body: Center(child: Text('Error ${snap.error}'),),);
         // }
         return Scaffold(
-          appBar: AppBar(title: const Text("Cyber Security Quiz")),
+          appBar: AppBar(title: const Text("Quiz Host")),
           drawer: screenWidth < 640 ? Drawer(child: Sidebar(hostId: widget.hostId,quizList: quizList,)) : null,
           body:  screenWidth < 640
-                  ? MainArea(hostId: widget.hostId,quizList: quizList,)
+                  ? MainArea(hostId: widget.hostId,quizList: quizList,onQuizAdded: reloadQuizzes,)
                   : Row(
                       children: [
                         SizedBox(width: screenWidth * 0.25, child: Sidebar(hostId: widget.hostId,quizList: quizList,)),
-                        Expanded(child: MainArea(hostId: widget.hostId,quizList: quizList,)),
+                        Expanded(child: MainArea(hostId: widget.hostId,quizList: quizList,onQuizAdded: reloadQuizzes)),
                       ],
                     )
                   );

@@ -41,6 +41,7 @@ class Question {
 
   factory Question.fromJson(Map<String,dynamic>json){
     return Question(
+      qId: json['qId'],
       questionText: json['questionText'], 
       options: (json['options'] as List<dynamic>).map((o)=>o as String).toList());
   }
