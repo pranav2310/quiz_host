@@ -87,6 +87,7 @@ class NewQuestion extends StatelessWidget{
                 ),
               );
             }),
+            if(question.optionControllers.length<4)
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(

@@ -96,6 +96,20 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         'iocl-quiz-host-default-rtdb.firebaseio.com',
         'session/$_quizCode/players/$_empId.json'
       );
+      final playerResponse = await http.get(playerUrl);
+      if(playerResponse.statusCode == 200 && playerResponse.body!='null'){
+        setState(() {
+          _isLoading = false;
+        });
+        Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (ctx)=>QuizScreen(
+            playerId : _empId,
+            sessionId: _quizCode, 
+            isHost: false
+          )
+        ));
+        return;
+      }
       final addPlayerResponse = await http.put(
         playerUrl,
         body: json.encode({

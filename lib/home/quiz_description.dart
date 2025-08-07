@@ -1,11 +1,12 @@
-import 'dart:convert';
 import 'dart:math';
 
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quiz_host/home/question_card.dart';
+import 'package:quiz_host/home/sidebar.dart';
 import 'package:quiz_host/models/quiz.dart';
-import 'package:http/http.dart' as http;
 import 'package:quiz_host/quiz/quiz_screen.dart';
 
 class QuizDescription extends ConsumerStatefulWidget{
@@ -26,68 +27,95 @@ class QuizDescription extends ConsumerStatefulWidget{
 }
 
 class _QuizDescriptionState extends ConsumerState<QuizDescription>{
+  Future<void> _deleteQuiz() async{
+    final shouldDelete = await showDialog<bool>(
+      context: context, 
+      builder: (ctx)=> AlertDialog(
+        title: const Text('Delete Quiz'),
+        content: const Text('Are you sure you want to delete this quiz? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: (){
+              Navigator.of(context).pop(false);
+            }, 
+            child: Text('Cancel')),
+          TextButton(
+            onPressed: (){
+              Navigator.of(context).pop(true);
+            }, 
+            child: Text('Delete'))
+        ],
+      )
+    );
+    if(shouldDelete!=true)return;
+    try{
+      final quizRef = FirebaseDatabase.instance.ref('quiz-list/${widget.hostId}/${widget.selectedQuiz.quizId}');
+      await quizRef.remove();
+      if(mounted){
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Quiz Deleted!!!')));
+        ref.read(selectedQuizProvider.notifier).state = null;
+      }
+    }
+    catch(e){
+      if(mounted){
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to Delete Quiz: $e')));
+      }
+    }
+  }
   void _hostQuiz() async {
-    final baseUrl = 'iocl-quiz-host-default-rtdb.firebaseio.com';
-    final sessionUrl = Uri.https(baseUrl,'session.json');
-    final sessionResponse = await http.get(sessionUrl);
-    if(sessionResponse.statusCode != 200){
-      throw Exception('Failed to fetch sessions');
-    }
-    final sessionData = json.decode(sessionResponse.body) as Map<String,dynamic>?;
-
-    String? existingSessionId;
-    String? state;
-
-    if(sessionData != null){
-      sessionData.forEach((id,session){
-        if(session is Map){
-          final String? quizId = session['quizId'];
-          final String? sesstate = session['state'];
-          if(quizId == widget.selectedQuiz.quizId && state != 'ended'){
-            existingSessionId = session['sessionId'];
-            state = sesstate;
-          }
+    try{
+      final sessionRef = FirebaseDatabase.instance.ref('session');
+      final sessionSnapshot = await sessionRef.get();
+      if(sessionSnapshot.exists){
+        final sessionData = sessionSnapshot.value as Map<String,dynamic>?;
+        String? existingSessionId;
+        if(sessionData != null){
+          sessionData.forEach((id,session){
+            if(session is Map){
+              final String? quizId = session['quizId'];
+              final String? sesstate = session['state'];
+              if(quizId == widget.selectedQuiz.quizId && sesstate != 'ended'){
+                existingSessionId = session['sessionId'];
+              }
+            }
+          });
         }
-      });
-    }
-    if(existingSessionId != null){
+        if(existingSessionId != null){
+          Navigator.of(context).push(MaterialPageRoute(
+          builder: (ctx)=>QuizScreen(
+            playerId: 'host01',
+            sessionId: existingSessionId!,
+            isHost: true,
+          )));
+          return;
+        }
+      }
+    
+      final sessionId = List.generate(6, (_)=>'0123456789'[Random().nextInt(10)]).join();
+      final sessionCreationRef = FirebaseDatabase.instance.ref('session/$sessionId');
+      await sessionCreationRef.update({
+          'sessionId': sessionId,
+          'hostId': widget.hostId,
+          'quizId': widget.selectedQuiz.quizId,
+          'currentQuestion': 0,
+          'state': 'waiting',
+          'players': {}
+        }
+      );
       Navigator.of(context).push(MaterialPageRoute(
-      builder: (ctx)=>QuizScreen(
-        playerId: 'host01',
-        sessionId: existingSessionId!,
-        isHost: true,
-      )));
-      return;
+        builder: (ctx)=>QuizScreen(
+          playerId: 'host01',
+          sessionId: sessionId,
+          isHost: true,
+        )
+      ));
+    }catch(e){
+      throw Exception('Session CreationError $e');
     }
-
-    final sessionId = List.generate(6, (_)=>'0123456789'[Random().nextInt(10)]).join();
-    final sessionCreationUrl = Uri.https(
-      baseUrl,
-      'session/$sessionId.json'
-    );
-    final response = await http.put(
-      sessionCreationUrl,
-      body:json.encode({
-        'sessionId': sessionId,
-        'hostId': widget.hostId,
-        'quizId': widget.selectedQuiz.quizId,
-        'currentQuestion': 0,
-        'state': 'waiting',
-        'players': {}
-      }),
-      headers: {'Content-Type':'application/json'}
-    );
-    if(response.statusCode != 200 && response.statusCode != 201){
-      throw Exception('Failed to create session');
-    }
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (ctx)=>QuizScreen(
-        playerId: 'host01',
-        sessionId: sessionId,
-        isHost: true,
-      )));
   }
   bool showAnswers = false;
+  Set<int> editQuesIdx = {};
+
   @override
   Widget build(BuildContext context) {
     final selectedQuiz = widget.selectedQuiz;
@@ -145,28 +173,32 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription>{
                             backgroundColor: Theme.of(context).colorScheme.secondary,
                             foregroundColor: Theme.of(context).colorScheme.onSecondary,
                             padding: const EdgeInsets.symmetric(
-                            vertical: 14, horizontal: 24),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                              vertical: 14, 
+                              horizontal: 24
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                           label: Text(showAnswers ?'Hide Answers' :'Show Answers'),
                         ),
                         const SizedBox(width: 8),
                         ElevatedButton.icon(
-                          icon: Icon(Icons.edit),
-                          onPressed: (){}, 
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Theme.of(context).colorScheme.secondary,
                             foregroundColor: Theme.of(context).colorScheme.onSecondary,
                             padding: const EdgeInsets.symmetric(
-                            vertical: 14, horizontal: 24),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                              vertical: 14, 
+                              horizontal: 24
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
-                          label: Text('Edit Quiz'),
-                        ),
+                          onPressed: _deleteQuiz, 
+                          label: Text('Delete Quiz'), 
+                          icon: Icon(Icons.delete),
+                        )
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -177,44 +209,12 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription>{
                       ),
                     ),
                     ListView.builder(itemBuilder: (ctx, idx){
-                      final question = selectedQuiz.questions[idx];
-                      return Card(
-                        elevation: 3,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        margin: EdgeInsets.symmetric(vertical: 6.0),
-                        child: Padding(
-                          padding: EdgeInsets.fromLTRB(12, 12, 12, 8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(question.questionText, style:Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                fontWeight: FontWeight.bold
-                              )),
-                              for(int opIdx=0; opIdx<question.options.length;opIdx++)
-                                Padding(
-                                  padding: EdgeInsets.only(left: 8,bottom: 4),
-                                  child: Text(
-                                    question.options[opIdx],
-                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      color: (opIdx==0 && showAnswers)?
-                                        Colors.green:
-                                        Theme.of(context).colorScheme.onSurface,
-                                      fontWeight: (opIdx==0 && showAnswers)?FontWeight.bold:FontWeight.normal
-                                    ),
-                                  ),
-                                )
-                            ],
-                          ),
-                        ),
-                      );
+                      return QuestionCard(showAnswers: showAnswers, qidx: idx,quizId: widget.selectedQuiz.quizId,hostId: widget.hostId,);
                     }, 
                       itemCount: selectedQuiz.questions.length,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                     ),
-                    // Additional content for the selected quiz can go here
                   ],
                 ),
               ),

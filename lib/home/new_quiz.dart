@@ -1,14 +1,12 @@
-import 'dart:convert';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quiz_host/models/quiz.dart';
-import 'package:http/http.dart' as http;
 import 'package:quiz_host/home/new_question.dart';
 
 class NewQuiz extends ConsumerStatefulWidget{
-  const NewQuiz({super.key,required this.hostId,required this.onQuizAdded});
+  const NewQuiz({super.key,required this.hostId});
   final String hostId;
-  final VoidCallback onQuizAdded;
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() {
@@ -24,20 +22,8 @@ class _NewQuizState extends ConsumerState<NewQuiz>{
   bool _isSubmitting = false;
   
   Future<void> addQuiz(Quiz quiz) async {
-    final addQuizUrl = Uri.https(
-      'iocl-quiz-host-default-rtdb.firebaseio.com',
-      'quiz-list/${widget.hostId}/${quiz.quizId}.json',
-    );
-
-    final response = await http.put(
-      addQuizUrl,
-      body: json.encode(quiz.toJson()),
-      headers: {'Content-Type':'application/json'}
-    );
-
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to save quiz to Firebase.');
-    }
+    final quizRef = FirebaseDatabase.instance.ref('quiz-list/${widget.hostId}/${quiz.quizId}');
+    await quizRef.update(quiz.toJson());
   }
 
   @override
@@ -117,7 +103,6 @@ class _NewQuizState extends ConsumerState<NewQuiz>{
         setState(() {
           _isSubmitting = false;
         });
-        widget.onQuizAdded();
       }
     }
   }
