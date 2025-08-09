@@ -43,7 +43,7 @@ class _QuestionDisplayState extends State<QuestionDisplay> {
           'currentQuestion' : widget.currentQuestionIndex+1
         });
       }catch(e){
-        throw Exception('Error $e');
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error $e')));
       }
     }
 
@@ -125,7 +125,6 @@ class _QuestionDisplayState extends State<QuestionDisplay> {
                     _selectedOption = shuffledOptions[idx];
                   });
                 },
-                onHover:(value) {},
                 child: Card(
                   color: cardColor,
                   child: Center(

@@ -14,11 +14,15 @@ Future<void> main()async{
   if(!kIsWeb){
     await dotenv.load(fileName:'.env');
   }
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform
-  );
+  try{
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform
+    );
+  }catch(e){
+    runApp(MaterialApp(home: Scaffold(body: Center(child: Text('Failed to Initialize app: $e'),),),));
+  }
   runApp(
-    QuizHostApp()
+    const QuizHostApp()
   );
 }
 

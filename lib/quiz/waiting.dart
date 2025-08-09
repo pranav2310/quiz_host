@@ -10,16 +10,16 @@ class Waiting extends StatelessWidget{
   final String sessionId;
   final bool isHost;
 
-  void _startQuiz(BuildContext context){
+  Future<void> _startQuiz(BuildContext context) async {
     final ref = FirebaseDatabase.instance.ref('session/$sessionId');
     try{
-      ref.update({
+      await ref.update({
         'currentQuestion' : 0,
         'state':'displayQuestion'
       });
     }
     catch(e){
-      throw Exception('Failed to Start Quiz');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to Start Quiz')));
     }
   }
 
@@ -48,12 +48,22 @@ class Waiting extends StatelessWidget{
                   return Text('No Players Joined yet!',style: Theme.of(context).textTheme.headlineMedium!.copyWith(color: Theme.of(context).colorScheme.onSecondary),);
                 }
                 final rawData = snapshot.data!.snapshot.value;
-                final data = Map<String,dynamic>.from(rawData as Map);
+                if(rawData is! Map){
+                  return Center(
+                    child: Text(
+                      'No Players Joined Yet!',
+                      style: Theme.of(context).textTheme.headlineMedium!.copyWith(
+                        color: Theme.of(context).colorScheme.onSecondary,
+                      ),
+                    ),
+                  );
+                }
+                final data = Map<String,dynamic>.from(rawData);
                 final playersRaw = data['players'];
-                if (playersRaw == null){
+                if (playersRaw == null || playersRaw is! Map){
                   return Center(child: Text('No Players Joined Yet',style: Theme.of(context).textTheme.headlineMedium!.copyWith(color: Theme.of(context).colorScheme.onSecondary)));
                 }
-                final playersMap = Map<String, dynamic>.from(playersRaw as Map);
+                final playersMap = Map<String, dynamic>.from(playersRaw);
                 final playerNames = playersMap.values.map((player)=>player['name'].toString()).toList();
                 return Padding(
                   padding: const EdgeInsets.all(8.0),
@@ -63,7 +73,7 @@ class Waiting extends StatelessWidget{
                       if(isHost)Center(
                         child: ElevatedButton(
                           onPressed: (){
-                            _startQuiz(context);
+                            playerNames.isNotEmpty?()=>_startQuiz(context):null;
                           }, 
                           child: Text('Start Quiz',style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),)
                         ),
@@ -75,7 +85,7 @@ class Waiting extends StatelessWidget{
                         ),
                       ),
                       const SizedBox(height: 12,),
-                      Flexible(
+                      Expanded(
                         child: GridView.builder(
                           gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                             maxCrossAxisExtent: 200,

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quiz_host/models/quiz.dart';
 import 'package:quiz_host/home/new_quiz.dart';
 import 'package:quiz_host/home/quiz_description.dart';
-import 'package:quiz_host/home/sidebar.dart';
+import 'package:quiz_host/provider/quiz_provider.dart';
 
 class MainArea extends ConsumerStatefulWidget{
   const MainArea({
@@ -25,16 +25,19 @@ class _MainAreaState extends ConsumerState<MainArea>{
   @override
   Widget build(BuildContext context) {
     final selectedQuiz = ref.watch(selectedQuizProvider);
-    return Container(
-      color: Theme.of(context).colorScheme.surface,
-      child: selectedQuiz == null ?
-      NewQuiz(hostId: widget.hostId):
-      QuizDescription(
-        hostId: widget.hostId,
-        selectedQuiz: selectedQuiz,
-        constraints: MediaQuery.of(context).size,
-      )
-      ,
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Container(
+        color: Theme.of(context).colorScheme.surface,
+        child: selectedQuiz == null ?
+        NewQuiz(hostId: widget.hostId):
+        QuizDescription(
+          hostId: widget.hostId,
+          selectedQuiz: selectedQuiz,
+          constraints: MediaQuery.of(context).size,
+        )
+        ,
+      ),
     );
   }
 }

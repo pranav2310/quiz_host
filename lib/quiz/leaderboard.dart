@@ -71,10 +71,10 @@ class _LeaderboardState extends State<Leaderboard>{
                 final sessionState = sessionRef.child('state');
                 if(sessionState == 'ended'){
                   if(widget.isHost){
-                    //back to home scree
+                    if(mounted)Navigator.of(context).popUntil((route)=>route.isFirst);
                   }
                   else{
-                    // back to auth screen
+                    if (mounted) Navigator.of(context).pushReplacementNamed('/auth-login/auth-screen');
                   }
                 }
                 try{

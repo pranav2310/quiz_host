@@ -1,18 +1,24 @@
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:quiz_host/models/quiz.dart';
 
 class QuestionCard extends StatefulWidget {
   const QuestionCard({
     super.key,
     required this.showAnswers,
-    required this.qidx,
+    required this.quesIdx,
     required this.quizId,
-    required this.hostId
+    required this.hostId,
+    required this.question,
+    required this.onDelete,
+    required this.onSave
   });
   final bool showAnswers;
-  final int qidx;
+  final int quesIdx;
   final String quizId;
   final String hostId;
+  final Question question;
+  final VoidCallback onDelete;
+  final Function(Question updated) onSave;
 
   @override
   State<StatefulWidget> createState() {
@@ -25,30 +31,33 @@ class _QuestionCardState extends State<QuestionCard> {
   List<TextEditingController>? optionControllers;
   bool isEditing = false;
 
-  void _initControllers(Map rawQuesData){
-    questionController = TextEditingController(text: rawQuesData['questionText']??'');
-    final optionsRaw = rawQuesData['options'];
-    final List<String> options = optionsRaw is List? optionsRaw.map((o)=>o?.toString()??'').toList():[];
+  void _initControllers(Question ques){
+    questionController = TextEditingController(text: widget.question.questionText);
+    final optionsRaw = widget.question.options;
+    final List<String> options = optionsRaw.map((o)=>o).toList();
     optionControllers = options.map((o)=>TextEditingController(text: o)).toList();
+  }
+
+  void _saveLocal(){
+    if(questionController!.text.trim().isEmpty){
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text('Question Field cannot be empty')));
+      return;
+    }
+    if(optionControllers!.length<2 || optionControllers!.any((op)=>op.text.trim().isEmpty)){
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text('Fill at least 2 valid Options')));
+      return;
+    }
+    final updated = Question(questionText: questionController!.text, options: optionControllers!.map((op)=>op.text.trim()).toList());
+    widget.onSave(updated);
+    setState(() {
+      isEditing = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final questionRef = FirebaseDatabase.instance.ref('/quiz-list/${widget.hostId}/${widget.quizId}/questions/${widget.qidx}');
-    return StreamBuilder<DatabaseEvent>(
-      stream: questionRef.onValue,
-      builder: (context, quesSnap) {
-        if(quesSnap.hasError){
-          return Center(child: Text('Error ${quesSnap.error}'),);
-        }
-        if(!quesSnap.hasData || !quesSnap.data!.snapshot.exists){
-          return Center(child: CircularProgressIndicator(),);
-        }
-        final rawQuesData = quesSnap.data!.snapshot.value as Map;
-        final String question = rawQuesData['questionText']??'';
-        final List<String> options = List<String>.from(rawQuesData['options']);
         if(isEditing && (questionController == null || optionControllers == null)){
-          _initControllers(rawQuesData);
+          _initControllers(widget.question);
         }
         return Card(
           elevation: 3,
@@ -109,19 +118,19 @@ class _QuestionCardState extends State<QuestionCard> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              question,
+                              widget.question.questionText,
                               style: Theme.of(context).textTheme.bodyLarge
                                   ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                             for (
                               int opIdx = 0;
-                              opIdx < options.length;
+                              opIdx < widget.question.options.length;
                               opIdx++
                             )
                               Padding(
                                 padding: EdgeInsets.only(left: 8, bottom: 4),
                                 child: Text(
-                                  options[opIdx],
+                                  widget.question.options[opIdx],
                                   style: Theme.of(context).textTheme.bodyMedium
                                       ?.copyWith(
                                         color: (opIdx == 0 && widget.showAnswers)
@@ -139,29 +148,26 @@ class _QuestionCardState extends State<QuestionCard> {
                           ],
                         )
                 ),
-                IconButton(
-                  tooltip: isEditing ? 'Save Question' : 'Edit Question',
-                  onPressed: () async {
-                    if (isEditing) {
-                      if(optionControllers!.length<2){
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Number of options must be more than 2')));
-                        return;
-                      }
-                      final questionRef = FirebaseDatabase.instance.ref('/quiz-list/${widget.hostId}/${widget.quizId}/questions/${widget.qidx}');
-                      await questionRef.update({
-                        'questionText':questionController!.text,
-                        'options': optionControllers!.map((ctrl)=>ctrl.text).toList()
-                      });
-                      setState(() {
-                        isEditing = false;
-                      });
-                    } else {
-                      setState(() {
-                        isEditing = true;
-                      });
-                    }
-                  },
-                  icon: Icon(Icons.edit),
+                Column(
+                  children: [
+                    IconButton(
+                      tooltip: isEditing ? 'Save Question' : 'Edit Question',
+                      onPressed: () async {
+                        if (isEditing) {
+                          _saveLocal();
+                        } else {
+                          setState(() {
+                            isEditing = true;
+                          });
+                        }
+                      },
+                      icon: Icon(isEditing ? Icons.save : Icons.edit),
+                    ),
+                    IconButton(
+                      tooltip: 'Delete Question',
+                      onPressed: widget.onDelete, 
+                      icon: Icon(Icons.delete)),
+                  ],
                 ),
                 if(isEditing)IconButton(onPressed: (){
                   setState(() {
@@ -173,6 +179,6 @@ class _QuestionCardState extends State<QuestionCard> {
           ),
         );
       }
-    );
-  }
+    // );
+  // }
 }

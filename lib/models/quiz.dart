@@ -11,11 +11,18 @@ class Quiz {
     required this.questions,
   }):quizId =quizId ?? Uuid().v4();
 
-  factory Quiz.fromJson(Map<String,dynamic> json){
+  factory Quiz.fromMap(Map<dynamic,dynamic> map){
+    final questionsRaw = map['questions'];
+    List<Question> questionList = [];
+    if(questionsRaw is List){
+      questionList = questionsRaw
+      .where((q)=>q!=null)
+      .map<Question>((q)=>Question.fromMap(Map<String,dynamic>.from(q))).toList();
+    }
     return Quiz(
-      quizId: json['quizId'],
-      quizTitle: json['quizTitle'],
-      questions: (json['questions'] as List<dynamic>).map((q)=>Question.fromJson(q as Map<String,dynamic>)).toList()
+      quizId: map['quizId'],
+      quizTitle: map['quizTitle'],
+      questions: questionList
     );
   }
 
@@ -29,28 +36,32 @@ class Quiz {
 }
 
 class Question {
-  final String qId;
   final String questionText;
   final List<String> options; //first option is always correct
   
   Question({
-    String? qId,
     required this.questionText,
     required this.options
-  }):qId =qId ?? Uuid().v4();
+  });
 
-  factory Question.fromJson(Map<String,dynamic>json){
+  factory Question.fromMap(Map<dynamic,dynamic>map){
+    final optionsRaw = map['options'];
+    List<String> options = [];
+    if(optionsRaw is List){
+      options = optionsRaw.map((o)=>o?.toString()??'').toList();
+    }
     return Question(
-      qId: json['qId'],
-      questionText: json['questionText'], 
-      options: (json['options'] as List<dynamic>).map((o)=>o as String).toList());
+      questionText: map['questionText'], 
+      options: options
+    );
   }
 
   Map<String ,dynamic> toJson(){
     return {
-      'qId': qId,
       'questionText':questionText,
       'options': options.map((o)=>o).toList()
     };
   }
+
+  static Question empty()=>Question(questionText: '' ,options: []);
 }

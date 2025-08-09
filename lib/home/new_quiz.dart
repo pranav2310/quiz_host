@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quiz_host/models/quiz.dart';
 import 'package:quiz_host/home/new_question.dart';
+import 'package:uuid/uuid.dart';
 
 class NewQuiz extends ConsumerStatefulWidget{
   const NewQuiz({super.key,required this.hostId});
@@ -16,7 +17,7 @@ class NewQuiz extends ConsumerStatefulWidget{
 
 class _NewQuizState extends ConsumerState<NewQuiz>{
   final _formKey = GlobalKey<FormState>();
-  final List<QuestionData> _questions = [QuestionData()];
+  List<QuestionData> _questions = [QuestionData()];
   final TextEditingController _quizTitleController = TextEditingController();
 
   bool _isSubmitting = false;
@@ -60,52 +61,67 @@ class _NewQuizState extends ConsumerState<NewQuiz>{
       _questions.removeAt(idx);
     });
   }
+  Future<void> _submitQuiz() async {
+  if (!_formKey.currentState!.validate()) return;
 
-  Future<void> _submitQuiz()async{
-    if(!_formKey.currentState!.validate()){
-      return;
-    }
-    for(var q in _questions){
-      if(q.optionControllers.length<2){
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Each Question must have Atleast 2 options')));
-        return;
+  setState(() => _isSubmitting = true);
+
+  try {
+    // Validation
+    for (final q in _questions) {
+      if (q.optionControllers.length < 2) {
+        throw Exception('Each question must have at least 2 options');
       }
-      for(var op in q.optionControllers){
-        if(op.text.trim().isEmpty){
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Please fill out the options')));
-          return;
+      if (q.questionInputController.text.trim().isEmpty) {
+        throw Exception('Please fill out all questions');
+      }
+      for (final op in q.optionControllers) {
+        if (op.text.trim().isEmpty) {
+          throw Exception('Please fill out all options');
         }
       }
-      final title = _quizTitleController.text.trim();
-      final questions = _questions.map((q){
-        return Question(
-          questionText: q.questionInputController.text, 
-          options: q.optionControllers.map((o)=>o.text.trim()).toList()
-        );
-      }).toList();
-      final newQuiz = Quiz(quizTitle: title, questions: questions);
-      setState(() {
-        _isSubmitting = true;
-      });
-      try{
-        await addQuiz(newQuiz);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Quiz Created Successfully')));
-        _formKey.currentState!.reset();
-        _quizTitleController.clear();
-        for(final q in _questions){q.dispose();}
-        _questions.clear();
-        _questions.add(QuestionData());
-        setState(() {});
-      }catch(e){
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to Create Quiz $e.')));
-      }
-      finally{
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
     }
+
+    final quizId = Uuid().v4();
+    final title = _quizTitleController.text.trim();
+
+    // Build questions as a LIST
+    final questionsList = _questions.asMap().entries.map((entry) {
+
+      final q = entry.value;
+
+      return {
+        'questionText': q.questionInputController.text,
+        'options': q.optionControllers.map((op) => op.text).toList(),
+      };
+    }).toList();
+
+    final newQuizData = {
+      'quizId': quizId,
+      'quizTitle': title,
+      'questions': questionsList,
+    };
+
+    final newQuizRef =
+        FirebaseDatabase.instance.ref('quiz-list/${widget.hostId}/$quizId');
+    await newQuizRef.set(newQuizData);
+
+    // Reset form
+    _formKey.currentState?.reset();
+    setState(() {
+      _questions = [QuestionData()];
+    });
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Quiz Created!')));
+  } catch (e) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('Error: $e')));
+  } finally {
+    setState(() => _isSubmitting = false);
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -173,7 +189,7 @@ class _NewQuizState extends ConsumerState<NewQuiz>{
 
 class QuestionData{
   final TextEditingController questionInputController = TextEditingController();
-  List<TextEditingController> optionControllers = [TextEditingController()];
+  List<TextEditingController> optionControllers = [TextEditingController(),TextEditingController()];
 
   void dispose(){
     questionInputController.dispose();

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quiz_host/models/quiz.dart';
-
-final selectedQuizProvider = StateProvider<Quiz?>((ref) => null);
+import 'package:quiz_host/provider/quiz_provider.dart';
 
 class Sidebar extends ConsumerStatefulWidget{
   const Sidebar({
@@ -13,7 +12,7 @@ class Sidebar extends ConsumerStatefulWidget{
   final String hostId;
   final List<Quiz> quizList;
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() {
+  ConsumerState<Sidebar> createState() {
     return _SidebarState();
   }
 } 
@@ -26,7 +25,6 @@ class _SidebarState extends ConsumerState<Sidebar>{
       builder: (context, constraints) {
         return Container(
         color: Theme.of(context).colorScheme.secondary,
-      
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(8.0),
@@ -53,7 +51,7 @@ class _SidebarState extends ConsumerState<Sidebar>{
                       'New Quiz',
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: (16 * (constraints.maxWidth / 160)).clamp(14.0, 24.0),
+                        fontSize: (16 * (constraints.maxWidth / 160)).clamp(14.0, 24.0).toDouble(),
                       ),
                     ),
                   ),
@@ -67,7 +65,7 @@ class _SidebarState extends ConsumerState<Sidebar>{
                     title: Text(
                       quiz.quizTitle,
                       style: TextStyle(
-                        fontSize: (16 * (constraints.maxWidth / 160)).clamp(14.0, 24.0),
+                        fontSize: (16 * (constraints.maxWidth / 160)).clamp(14.0, 24.0).toDouble(),
                         color: Theme.of(context).colorScheme.onSecondary,
                       ),
                     ),
