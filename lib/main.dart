@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quiz_host/firebase_options.dart';
 import 'package:quiz_host/auth-login/auth_screen.dart';
@@ -11,15 +10,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 Future<void> main()async{
   WidgetsFlutterBinding.ensureInitialized();
-  if(!kIsWeb){
-    await dotenv.load(fileName:'.env');
-  }
+  // if(!kIsWeb){
+  //   await dotenv.load(fileName:'.env');
+  // }
   try{
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform
     );
   }catch(e){
     runApp(MaterialApp(home: Scaffold(body: Center(child: Text('Failed to Initialize app: $e'),),),));
+    return;
   }
   runApp(
     const QuizHostApp()
@@ -63,6 +63,9 @@ class QuizHostApp extends StatelessWidget{
         home: StreamBuilder(
           stream: FirebaseAuth.instance.authStateChanges(), 
           builder: (ctx, snap){
+            if(snap.connectionState == ConnectionState.waiting){
+              return Center(child: CircularProgressIndicator(),);
+            }
             if(snap.hasData){
               return HomeScreen(hostId: snap.data!.uid);
             }

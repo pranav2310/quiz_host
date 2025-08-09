@@ -20,8 +20,8 @@ class Quiz {
       .map<Question>((q)=>Question.fromMap(Map<String,dynamic>.from(q))).toList();
     }
     return Quiz(
-      quizId: map['quizId'],
-      quizTitle: map['quizTitle'],
+      quizId: map['quizId']?.toString() ?? '',
+      quizTitle: map['quizTitle']?.toString()??'',
       questions: questionList
     );
   }
@@ -51,7 +51,7 @@ class Question {
       options = optionsRaw.map((o)=>o?.toString()??'').toList();
     }
     return Question(
-      questionText: map['questionText'], 
+      questionText: map['questionText']?.toString() ?? '', 
       options: options
     );
   }

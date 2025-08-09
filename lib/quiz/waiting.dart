@@ -72,9 +72,9 @@ class Waiting extends StatelessWidget{
                     children: [
                       if(isHost)Center(
                         child: ElevatedButton(
-                          onPressed: (){
-                            playerNames.isNotEmpty?()=>_startQuiz(context):null;
-                          }, 
+                          onPressed: playerNames.isNotEmpty?(){
+                              _startQuiz(context);
+                          }:null, 
                           child: Text('Start Quiz',style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),)
                         ),
                       ),

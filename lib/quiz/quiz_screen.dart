@@ -27,14 +27,18 @@ class QuizScreen extends StatefulWidget {
 class _QuizScreenState extends State<QuizScreen> {
   Quiz? quizCache;
   Future<Quiz> fetchQuiz(String hostId, String quizId) async {
+    print('HostId- $hostId, QuizId- $quizId');
     if (quizCache != null) return quizCache!;
     final quizRef = FirebaseDatabase.instance.ref('quiz-list/$hostId/$quizId');
     final quizSnapshot = await quizRef.get();
     if (!quizSnapshot.exists || quizSnapshot.value == null) {
       throw Exception('Quiz not found');
     }
-    final quizData = Map<String, dynamic>.from(json.decode(json.encode(quizSnapshot.value)));
-    quizCache = Quiz.fromMap(quizData);
+    if (quizSnapshot.value is! Map) {
+      throw Exception('Invalid quiz data format');
+    }
+    final quizData = Map<String, dynamic>.from(quizSnapshot.value as Map);
+    quizCache = Quiz.fromMap(quizData[quizId]);
     return quizCache!;
   }
 

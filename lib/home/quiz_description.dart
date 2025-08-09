@@ -89,18 +89,16 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
         if (rawData is Map) {
           final sessionData = Map<String, dynamic>.from(rawData);
           String? existingSessionId;
-          if (sessionData != null) {
-            sessionData.forEach((id, session) {
-              if (session is Map) {
-                final quizId = session['quizId']?.toString();
-                final sesstate = session['state']?.toString();
-                if (quizId == widget.selectedQuiz.quizId &&
-                    sesstate != 'ended') {
-                  existingSessionId = session['sessionId']?.toString();
-                }
+          sessionData.forEach((id, session) {
+            if (session is Map) {
+              final quizId = session['quizId']?.toString();
+              final sesstate = session['state']?.toString();
+              if (quizId == widget.selectedQuiz.quizId &&
+                sesstate != 'ended') {
+                existingSessionId = session['sessionId']?.toString();
               }
-            });
-          }
+            }
+          });
           if (existingSessionId != null) {
             if (!mounted) return;
             Navigator.of(context).push(
@@ -162,7 +160,9 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
   }
 
   Future<void> _deleteQuestionAt(int idx) async {
-    questionCache.removeAt(idx);
+    setState(() {
+      questionCache.removeAt(idx);
+    });
     await _updateAllQuestion();
   }
 

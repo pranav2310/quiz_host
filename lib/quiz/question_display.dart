@@ -32,7 +32,7 @@ class _QuestionDisplayState extends State<QuestionDisplay> {
     shuffledOptions = List<String>.from(widget.question.options)..shuffle();
   }
 
-  String? _selectedOption;
+  int? _selectedOptionIdx;
   bool _submitedOnce = false;
 
   void _nextScreen(){
@@ -55,7 +55,7 @@ class _QuestionDisplayState extends State<QuestionDisplay> {
       if(currentScoreSnap.exists && currentScoreSnap.value is int){
         currentScore = currentScoreSnap.value as int;
       }
-      if(_selectedOption == widget.question.options[0]){
+      if(_selectedOptionIdx!=null && shuffledOptions[_selectedOptionIdx!] == widget.question.options[0]){
         await playerRef.update({'score':currentScore + 1});
       }
       setState(() {
@@ -110,7 +110,7 @@ class _QuestionDisplayState extends State<QuestionDisplay> {
             itemCount: shuffledOptions.length,
             itemBuilder: (ctx, idx) {
               bool isCorrectOption = widget.question.options[0] == shuffledOptions[idx];
-              bool isSelected = _selectedOption == shuffledOptions[idx];
+              bool isSelected = _selectedOptionIdx!=null && _selectedOptionIdx! == idx;
               Color cardColor;
               if (widget.revealAnswer){
                   cardColor = isCorrectOption ? Colors.green.withOpacity(.2): Colors.white;
@@ -122,7 +122,7 @@ class _QuestionDisplayState extends State<QuestionDisplay> {
               return InkWell(
                 onTap: (){
                   setState(() {
-                    _selectedOption = shuffledOptions[idx];
+                    _selectedOptionIdx = idx;
                   });
                 },
                 child: Card(

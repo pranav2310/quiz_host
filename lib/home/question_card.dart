@@ -163,6 +163,7 @@ class _QuestionCardState extends State<QuestionCard> {
                       },
                       icon: Icon(isEditing ? Icons.save : Icons.edit),
                     ),
+                    if(!isEditing)
                     IconButton(
                       tooltip: 'Delete Question',
                       onPressed: widget.onDelete, 
