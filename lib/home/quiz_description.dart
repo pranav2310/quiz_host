@@ -178,19 +178,22 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
 
   Widget _buildActionButton({
     required IconData icon,
-    required label,
+    required String label,
     required VoidCallback onPressed,
   }) {
-    return ElevatedButton.icon(
-      icon: Icon(icon),
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Theme.of(context).colorScheme.secondary,
-        foregroundColor: Theme.of(context).colorScheme.onSecondary,
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return SizedBox(
+      width: 200,
+      child: ElevatedButton.icon(
+        icon: Icon(icon),
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Theme.of(context).colorScheme.secondary,
+          foregroundColor: Theme.of(context).colorScheme.onSecondary,
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        label: Text(label),
       ),
-      label: Text(label),
     );
   }
 
@@ -224,7 +227,6 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
                   label: 'Host Quiz',
                   onPressed: _hostQuiz,
                 ),
-                const SizedBox(width: 8),
                 _buildActionButton(
                   icon: showAnswers ? Icons.visibility_off : Icons.visibility,
                   label: showAnswers ? 'Hide Answers' : 'Show Answers',
@@ -234,7 +236,6 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
                     });
                   },
                 ),
-                const SizedBox(width: 8),
                 _buildActionButton(
                   icon: Icons.delete,
                   label: 'Delete Quiz',

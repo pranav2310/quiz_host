@@ -1,8 +1,6 @@
-import 'dart:convert';
-
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:quiz_host/quiz/quiz_screen.dart';
-import 'package:http/http.dart' as http;
 
 class PlayerSignup extends StatefulWidget {
   const PlayerSignup({super.key,required this.onToggle});
@@ -49,22 +47,16 @@ class _PlayerSignupState extends State<PlayerSignup> {
     setState(() {
       _isLoading = true;
     });
-    final sessionUrl = Uri.https(
-      'iocl-quiz-host-default-rtdb.firebaseio.com',
-      'session/$_quizCode.json'
-    );
+    final sessionRef = FirebaseDatabase.instance.ref('session/$_quizCode');
     try{
-      final response = await http.get(sessionUrl);
-      if(response.statusCode!=200){
+      final sessionSnap = await sessionRef.get();
+      if(!sessionSnap.exists){
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('The Quiz Code doesnt exist Enter Valid Quiz Code')));
         return;
       }
-      final playerUrl = Uri.https(
-        'iocl-quiz-host-default-rtdb.firebaseio.com',
-        'session/$_quizCode/players/$_empId.json'
-      );
-      final playerResponse = await http.get(playerUrl);
-      if(playerResponse.statusCode == 200 && playerResponse.body!='null'){
+      final playerRef = FirebaseDatabase.instance.ref('session/$_quizCode/players/$_empId');
+      final playerSnap = await playerRef.get();
+      if(!playerSnap.exists){
         setState(() {
           _isLoading = false;
         });
@@ -77,22 +69,13 @@ class _PlayerSignupState extends State<PlayerSignup> {
         ));
         return;
       }
-      final addPlayerResponse = await http.put(
-        playerUrl,
-        body: json.encode({
+      await playerRef.set({
+        {
           'id':_empId,
           'name':_playerName,
           'score':0
-        }),
-        headers: {'Content-Type':'application/json'},
-      );
-      if(addPlayerResponse.statusCode != 200 && addPlayerResponse.statusCode != 201){
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to join quiz. Please try again.'))
-      );
-      return;
-    }
-
+        }
+      });
       setState(() {
         _isLoading = false;
       });

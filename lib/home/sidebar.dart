@@ -42,7 +42,8 @@ class _SidebarState extends ConsumerState<Sidebar>{
                       backgroundColor: Theme.of(context).colorScheme.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
-                      ), 
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12,vertical: 8)
                     ),
                     onPressed: (){
                       ref.read(selectedQuizProvider.notifier).state = null;
@@ -57,25 +58,27 @@ class _SidebarState extends ConsumerState<Sidebar>{
                   ),
                 ),
                 const SizedBox(height: 20),
-                ListView.builder(
-                  itemCount: widget.quizList.length,
-                  itemBuilder: (ctx, index) {
-                  final quiz = widget.quizList[index];
-                  return ListTile(
-                    title: Text(
-                      quiz.quizTitle,
-                      style: TextStyle(
-                        fontSize: (16 * (constraints.maxWidth / 160)).clamp(14.0, 24.0).toDouble(),
-                        color: Theme.of(context).colorScheme.onSecondary,
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: widget.quizList.length,
+                    itemBuilder: (ctx, index) {
+                    final quiz = widget.quizList[index];
+                    return ListTile(
+                      title: Text(
+                        quiz.quizTitle,
+                        style: TextStyle(
+                          fontSize: (16 * (constraints.maxWidth / 160)).clamp(14.0, 24.0).toDouble(),
+                          color: Theme.of(context).colorScheme.onSecondary,
+                        ),
                       ),
-                    ),
-                    onTap: () {
-                      ref.read(selectedQuizProvider.notifier).state = quiz;
-                    },
-                  );
-                }, 
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
+                      onTap: () {
+                        ref.read(selectedQuizProvider.notifier).state = quiz;
+                      },
+                    );
+                  }, 
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                  ),
                 ),
               ],
             ),
