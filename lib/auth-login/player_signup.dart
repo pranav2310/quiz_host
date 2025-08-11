@@ -60,32 +60,34 @@ class _PlayerSignupState extends State<PlayerSignup> {
         setState(() {
           _isLoading = false;
         });
-        Navigator.of(context).pushReplacement(MaterialPageRoute(
-          builder: (ctx)=>QuizScreen(
-            playerId : _empId,
-            sessionId: _quizCode, 
-            isHost: false
-          )
-        ));
-        return;
-      }
-      await playerRef.set({
-        {
+        await playerRef.set({
           'id':_empId,
           'name':_playerName,
           'score':0
+        });
+        if(mounted){
+          Navigator.of(context).pushReplacement(MaterialPageRoute(
+            builder: (ctx)=>QuizScreen(
+              playerId : _empId,
+              sessionId: _quizCode, 
+              isHost: false
+            )
+          ));
         }
-      });
-      setState(() {
-        _isLoading = false;
-      });
+      }
+      else{
       Navigator.of(context).pushReplacement(MaterialPageRoute(
         builder: (ctx)=>QuizScreen(
           playerId : _empId,
           sessionId: _quizCode, 
           isHost: false
-        )
-      ));
+          )
+        ));
+      }
+      setState(() {
+        _isLoading = false;
+      });
+      
     }
     catch(e){
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error $e')));

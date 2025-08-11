@@ -33,7 +33,7 @@ class _MainAreaState extends ConsumerState<MainArea>{
         NewQuiz(hostId: widget.hostId):
         QuizDescription(
           hostId: widget.hostId,
-          selectedQuiz: selectedQuiz,
+          // selectedQuiz: selectedQuiz,
           constraints: MediaQuery.of(context).size,
         )
         ,

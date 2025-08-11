@@ -13,11 +13,11 @@ class QuizDescription extends ConsumerStatefulWidget {
   const QuizDescription({
     super.key,
     required this.hostId,
-    required this.selectedQuiz,
+    // required this.selectedQuiz,
     required this.constraints,
   });
   final String hostId;
-  final Quiz selectedQuiz;
+  // final Quiz selectedQuiz;
   final Size constraints;
 
   @override
@@ -32,10 +32,11 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
   @override
   void initState() {
     super.initState();
-    questionCache = widget.selectedQuiz.questions;
+    final selectedQuiz = ref.read(selectedQuizProvider);
+    questionCache = List.from(selectedQuiz!.questions);
   }
 
-  Future<void> _deleteQuiz() async {
+  Future<void> _deleteQuiz(Quiz selectedQuiz) async {
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -62,7 +63,7 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
     if (shouldDelete != true) return;
     try {
       final quizRef = FirebaseDatabase.instance.ref(
-        'quiz-list/${widget.hostId}/${widget.selectedQuiz.quizId}',
+        'quiz-list/${widget.hostId}/${selectedQuiz.quizId}',
       );
       await quizRef.remove();
       if (mounted) {
@@ -80,7 +81,7 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
     }
   }
 
-  void _hostQuiz() async {
+  void _hostQuiz(Quiz selectedQuiz) async {
     try {
       final sessionRef = FirebaseDatabase.instance.ref('session');
       final sessionSnapshot = await sessionRef.get();
@@ -93,7 +94,7 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
             if (session is Map) {
               final quizId = session['quizId']?.toString();
               final sesstate = session['state']?.toString();
-              if (quizId == widget.selectedQuiz.quizId &&
+              if (quizId == selectedQuiz.quizId &&
                 sesstate != 'ended') {
                 existingSessionId = session['sessionId']?.toString();
               }
@@ -130,7 +131,7 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
       await sessionCreationRef.update({
         'sessionId': sessionId,
         'hostId': widget.hostId,
-        'quizId': widget.selectedQuiz.quizId,
+        'quizId': selectedQuiz.quizId,
         'currentQuestion': 0,
         'state': 'waiting',
         'players': {},
@@ -152,25 +153,25 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
     }
   }
 
-  Future<void> _updateAllQuestion() async {
+  Future<void> _updateAllQuestion(Quiz selectedQuiz) async {
     final questionsRef = FirebaseDatabase.instance.ref(
-      'quiz-list/${widget.hostId}/${widget.selectedQuiz.quizId}/questions',
+      'quiz-list/${widget.hostId}/${selectedQuiz.quizId}/questions',
     );
     await questionsRef.set(questionCache.map((q) => q.toJson()).toList());
   }
 
-  Future<void> _deleteQuestionAt(int idx) async {
+  Future<void> _deleteQuestionAt(int idx, Quiz selectedQuiz) async {
     setState(() {
       questionCache.removeAt(idx);
     });
-    await _updateAllQuestion();
+    await _updateAllQuestion(selectedQuiz);
   }
 
-  Future<void> _editQuestionAt(int idx, Question updated) async {
+  Future<void> _editQuestionAt(int idx, Question updated, Quiz selectedQuiz) async {
     setState(() {
       questionCache[idx] = updated;
     });
-    await _updateAllQuestion();
+    await _updateAllQuestion(selectedQuiz);
   }
 
   bool showAnswers = false;
@@ -199,7 +200,15 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedQuiz = widget.selectedQuiz;
+    ref.listen<Quiz?>(selectedQuizProvider, (prev,next){
+      if(next!=null){
+        setState(() {
+          questionCache = List.from(next.questions);
+        });
+      }
+    });
+    final selectedQuiz = ref.watch(selectedQuizProvider);
+    // final selectedQuiz = widget.selectedQuiz;
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -209,7 +218,7 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
           children: [
             Center(
               child: Text(
-                selectedQuiz.quizTitle,
+                selectedQuiz!.quizTitle,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: Theme.of(context).colorScheme.onSurface,
                   fontWeight: FontWeight.bold,
@@ -225,7 +234,7 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
                 _buildActionButton(
                   icon: Icons.play_arrow,
                   label: 'Host Quiz',
-                  onPressed: _hostQuiz,
+                  onPressed: (){_hostQuiz(selectedQuiz);},
                 ),
                 _buildActionButton(
                   icon: showAnswers ? Icons.visibility_off : Icons.visibility,
@@ -239,7 +248,7 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
                 _buildActionButton(
                   icon: Icons.delete,
                   label: 'Delete Quiz',
-                  onPressed: _deleteQuiz,
+                  onPressed: (){_deleteQuiz(selectedQuiz);},
                 ),
               ],
             ),
@@ -257,12 +266,12 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
                 return QuestionCard(
                   showAnswers: showAnswers,
                   quesIdx: idx,
-                  quizId: widget.selectedQuiz.quizId,
+                  quizId: selectedQuiz.quizId,
                   hostId: widget.hostId,
                   question: questionCache[idx],
-                  onDelete: () => _deleteQuestionAt(idx),
+                  onDelete: () => _deleteQuestionAt(idx, selectedQuiz),
                   onSave: (updatedQuestion) =>
-                      _editQuestionAt(idx, updatedQuestion),
+                      _editQuestionAt(idx, updatedQuestion, selectedQuiz),
                 );
               },
             ),

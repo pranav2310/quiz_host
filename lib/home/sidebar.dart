@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quiz_host/models/quiz.dart';
@@ -80,6 +81,14 @@ class _SidebarState extends ConsumerState<Sidebar>{
                     physics: const NeverScrollableScrollPhysics(),
                   ),
                 ),
+                const Divider(),
+                  ListTile(
+                    leading: Icon(Icons.logout, color: Colors.white,),
+                    title: Text('Logout', style: TextStyle(color: Colors.white),),
+                    onTap: ()async{
+                      await FirebaseAuth.instance.signOut();
+                    },
+                  )
               ],
             ),
           ),
