@@ -3,12 +3,16 @@ import 'package:uuid/uuid.dart';
 class Quiz {
   final String quizId;
   final String quizTitle;
+  final String quizDescription;
   final List<Question> questions;
+  final DateTime? createdOn;
 
   Quiz({
     String? quizId,
     required this.quizTitle,
     required this.questions,
+    required this.quizDescription,
+    this.createdOn
   }):quizId =quizId ?? Uuid().v4();
 
   factory Quiz.fromMap(Map<dynamic,dynamic> map){
@@ -22,7 +26,9 @@ class Quiz {
     return Quiz(
       quizId: map['quizId']?.toString() ?? '',
       quizTitle: map['quizTitle']?.toString()??'',
-      questions: questionList
+      questions: questionList,
+      quizDescription: map['quizDescription']?.toString()??'',
+      createdOn: map['sessionCreatedAt']!=null?DateTime.fromMillisecondsSinceEpoch(map['sessionCreatedAt']):null
     );
   }
 
@@ -30,7 +36,9 @@ class Quiz {
     return {
       'quizId': quizId,
       'quizTitle':quizTitle,
-      'questions':questions.map((q)=>q.toJson()).toList()
+      'questions':questions.map((q)=>q.toJson()).toList(),
+      'quizDescription': quizDescription,
+      'createdOn':createdOn
     };
   }
 }

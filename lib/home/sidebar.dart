@@ -19,6 +19,40 @@ class Sidebar extends ConsumerStatefulWidget{
 } 
 
 class _SidebarState extends ConsumerState<Sidebar>{
+
+  Widget _sidebarButton({
+    required IconData icon, 
+    required VoidCallback onTap, 
+    required String label}){
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 4),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, color: Theme.of(context).colorScheme.onPrimary,),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary
+                    ),
+                  ),
+                )
+              ],
+            ),
+          ),
+        ),
+      );
+    }
   
   @override
   Widget build(BuildContext context) {
@@ -32,31 +66,37 @@ class _SidebarState extends ConsumerState<Sidebar>{
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(
-                  child: TextButton.icon(
-                    icon: Icon(
-                      Icons.add,
-                      size: (16 * constraints.maxWidth/160).clamp(14, 24),
-                    ),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 12,vertical: 8)
-                    ),
-                    onPressed: (){
+                _sidebarButton(
+                  icon: Icons.dashboard, 
+                  onTap: (){
                       ref.read(selectedQuizProvider.notifier).state = null;
+                      ref.read(mainScreenProvider.notifier).state = 'mis';
+                      Navigator.of(context).pop();
                     }, 
-                    label:Text(
-                      'New Quiz',
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: (16 * (constraints.maxWidth / 160)).clamp(14.0, 24.0).toDouble(),
+                  label: 'Dashboard'
+                ),
+                const SizedBox(height: 20),
+                _sidebarButton(
+                  icon: Icons.add, 
+                  onTap: (){
+                      ref.read(selectedQuizProvider.notifier).state = null;
+                      ref.read(mainScreenProvider.notifier).state = 'new_quiz';
+                      Navigator.of(context).pop();
+                    }, 
+                  label: 'New Quiz'
+                ),
+                const SizedBox(height: 20),
+                if(widget.quizList.isNotEmpty)
+                Row(
+                  children: [
+                    Text(
+                      'Existing Quizes',
+                      style: Theme.of(context).textTheme.headlineMedium!.copyWith(
+                        color: Theme.of(context).colorScheme.onSecondary
                       ),
                     ),
-                  ),
+                    Icon(Icons.arrow_drop_down, color: Theme.of(context).colorScheme.onPrimary,)
+                  ],
                 ),
                 const SizedBox(height: 20),
                 Expanded(
@@ -64,31 +104,43 @@ class _SidebarState extends ConsumerState<Sidebar>{
                     itemCount: widget.quizList.length,
                     itemBuilder: (ctx, index) {
                     final quiz = widget.quizList[index];
-                    return ListTile(
-                      title: Text(
-                        quiz.quizTitle,
-                        style: TextStyle(
-                          fontSize: (16 * (constraints.maxWidth / 160)).clamp(14.0, 24.0).toDouble(),
-                          color: Theme.of(context).colorScheme.onSecondary,
-                        ),
-                      ),
+                    final selectedQuiz = ref.watch(selectedQuizProvider);
+                    final isSelected = selectedQuiz!=null  && quiz.quizTitle == selectedQuiz.quizTitle;
+                    return InkWell(
                       onTap: () {
-                        ref.read(selectedQuizProvider.notifier).state = quiz;
+                          ref.read(selectedQuizProvider.notifier).state = quiz;
+                          ref.read(mainScreenProvider.notifier).state = 'quiz';
+                          Navigator.of(context).pop();
                       },
-                    );
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isSelected? Theme.of(context).colorScheme.surface.withValues(alpha: 0.25):null,
+                          borderRadius: BorderRadius.circular(8)
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12,horizontal: 10),
+                          child: Text(
+                            quiz.quizTitle,
+                            style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                              color: Theme.of(context).colorScheme.onSecondary,
+                              fontWeight: isSelected? FontWeight.bold:FontWeight.normal
+                            ),
+                          ),
+                        ),
+                        ),
+                      );
                   }, 
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
                   ),
                 ),
                 const Divider(),
-                  ListTile(
-                    leading: Icon(Icons.logout, color: Colors.white,),
-                    title: Text('Logout', style: TextStyle(color: Colors.white),),
-                    onTap: ()async{
+                _sidebarButton(
+                  icon: Icons.logout, 
+                  onTap: ()async{
                       await FirebaseAuth.instance.signOut();
-                    },
-                  )
+                    }, 
+                  label: 'LogOut'
+                ),
               ],
             ),
           ),

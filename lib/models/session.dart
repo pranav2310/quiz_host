@@ -6,6 +6,7 @@ class Session {
     this.currentQuestion = -1,
     this.state = SessionState.waiting,
     Map<String,Player>? players,
+    this.sessionCreatedAt
   }):players = players ?? {};
 
   final String sessionId;
@@ -14,6 +15,7 @@ class Session {
   final int currentQuestion;
   final SessionState state;
   final Map<String, Player> players;
+  final DateTime? sessionCreatedAt;
 
   Map<String,dynamic> toJson()=>{
     'sessionId':sessionId,
@@ -21,7 +23,8 @@ class Session {
     'quizId':quizId,
     'currentQuestion':currentQuestion,
     'state':state.name,
-    'players':players
+    'players':players,
+    'sessionCreationAt':sessionCreatedAt
   };
 
   static SessionState _statefromString(String stateString){
@@ -43,7 +46,8 @@ class Session {
       quizId: json['quizId'],
       currentQuestion: json['currentQuestion'],
       state: _statefromString(json['state']),
-      players: playerObjects
+      players: playerObjects,
+      sessionCreatedAt: json['sessionCreatedAt']!=null?DateTime.fromMillisecondsSinceEpoch(json['sessionCreatedAt']):null
     );
   }
 }

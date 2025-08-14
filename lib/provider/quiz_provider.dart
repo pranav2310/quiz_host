@@ -19,3 +19,4 @@ final quizListProvider = StreamProvider.family<List<Quiz>, String>((ref, hostId)
 });
 
 final selectedQuizProvider = StateProvider<Quiz?>((ref) => null);
+final mainScreenProvider = StateProvider<String>((ref)=>'mis');

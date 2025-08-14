@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quiz_host/firebase_options.dart';
-import 'package:quiz_host/auth-login/auth_screen.dart';
+import 'package:quiz_host/landing_page/landing_screen.dart';
 import 'home/home_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -67,9 +67,9 @@ class QuizHostApp extends StatelessWidget{
               return Center(child: CircularProgressIndicator(),);
             }
             if(snap.hasData){
-              return HomeScreen(hostId: snap.data!.uid);
+              return HomeScreen(hostId: snap.data!.uid, hostName: snap.data!.displayName??'',);
             }
-            return AuthScreen();
+            return LandingScreen();
           }
         )
       ),

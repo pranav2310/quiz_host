@@ -4,6 +4,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:quiz_host/home/question_card.dart';
 import 'package:quiz_host/models/quiz.dart';
 import 'package:quiz_host/provider/quiz_provider.dart';
@@ -13,12 +14,8 @@ class QuizDescription extends ConsumerStatefulWidget {
   const QuizDescription({
     super.key,
     required this.hostId,
-    // required this.selectedQuiz,
-    required this.constraints,
   });
   final String hostId;
-  // final Quiz selectedQuiz;
-  final Size constraints;
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() {
@@ -135,6 +132,7 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
         'currentQuestion': 0,
         'state': 'waiting',
         'players': {},
+        'sessionCreatedAt':ServerValue.timestamp
       });
       if (!mounted) return;
       Navigator.of(context).push(
@@ -188,7 +186,7 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
         icon: Icon(icon),
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Theme.of(context).colorScheme.secondary,
+          backgroundColor: Theme.of(context).colorScheme.primary,
           foregroundColor: Theme.of(context).colorScheme.onSecondary,
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -208,87 +206,88 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
       }
     });
     final selectedQuiz = ref.watch(selectedQuizProvider);
-    // final selectedQuiz = widget.selectedQuiz;
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
+    final quizCreationDate = selectedQuiz!.createdOn != null?DateFormat('dd MM yyyy').format(selectedQuiz.createdOn!):'Unknown Date';
+    return ListView(
+      padding: EdgeInsets.all(16),
+      children: [
+        Center(
+          child: Text(
+            selectedQuiz.quizTitle,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: Theme.of(context).colorScheme.onSecondary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 12,
+          runSpacing: 12,
           children: [
-            Center(
-              child: Text(
-                selectedQuiz!.quizTitle,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            _buildActionButton(
+              icon: Icons.play_arrow,
+              label: 'Host Quiz',
+              onPressed: (){_hostQuiz(selectedQuiz);},
             ),
-            const SizedBox(height: 20),
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                _buildActionButton(
-                  icon: Icons.play_arrow,
-                  label: 'Host Quiz',
-                  onPressed: (){_hostQuiz(selectedQuiz);},
-                ),
-                _buildActionButton(
-                  icon: showAnswers ? Icons.visibility_off : Icons.visibility,
-                  label: showAnswers ? 'Hide Answers' : 'Show Answers',
-                  onPressed: () {
-                    setState(() {
-                      showAnswers = !showAnswers;
-                    });
-                  },
-                ),
-                _buildActionButton(
-                  icon: Icons.delete,
-                  label: 'Delete Quiz',
-                  onPressed: (){_deleteQuiz(selectedQuiz);},
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Questions',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-            ListView.builder(
-              shrinkWrap: true,
-              itemCount: questionCache.length,
-              itemBuilder: (ctx, idx) {
-                return QuestionCard(
-                  showAnswers: showAnswers,
-                  quesIdx: idx,
-                  quizId: selectedQuiz.quizId,
-                  hostId: widget.hostId,
-                  question: questionCache[idx],
-                  onDelete: () => _deleteQuestionAt(idx, selectedQuiz),
-                  onSave: (updatedQuestion) =>
-                      _editQuestionAt(idx, updatedQuestion, selectedQuiz),
-                );
-              },
-            ),
-            ElevatedButton.icon(
-              onPressed: (){
+            _buildActionButton(
+              icon: showAnswers ? Icons.visibility_off : Icons.visibility,
+              label: showAnswers ? 'Hide Answers' : 'Show Answers',
+              onPressed: () {
                 setState(() {
-                  questionCache.add(
-                    Question(questionText: 'New Question', options: ['option','option'])
-                  );
+                  showAnswers = !showAnswers;
                 });
               },
-              label: Text('Add a Question'),
-              icon: Icon(Icons.add),
+            ),
+            _buildActionButton(
+              icon: Icons.delete,
+              label: 'Delete Quiz',
+              onPressed: (){_deleteQuiz(selectedQuiz);},
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 20),
+        Text(
+          'Created On: $quizCreationDate',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSecondary,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          'Questions',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            color: Theme.of(context).colorScheme.onSecondary,
+          ),
+        ),
+        ListView.builder(
+          shrinkWrap: true,
+          itemCount: questionCache.length,
+          itemBuilder: (ctx, idx) {
+            return QuestionCard(
+              showAnswers: showAnswers,
+              quesIdx: idx,
+              quizId: selectedQuiz.quizId,
+              hostId: widget.hostId,
+              question: questionCache[idx],
+              onDelete: () => _deleteQuestionAt(idx, selectedQuiz),
+              onSave: (updatedQuestion) =>
+                  _editQuestionAt(idx, updatedQuestion, selectedQuiz),
+            );
+          },
+        ),
+        ElevatedButton.icon(
+          onPressed: (){
+            setState(() {
+              questionCache.add(
+                Question(questionText: 'New Question', options: ['option','option'])
+              );
+            });
+          },
+          label: Text('Add a Question'),
+          icon: Icon(Icons.add),
+        ),
+      ],
     );
   }
 }
