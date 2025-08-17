@@ -1,18 +1,11 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:quiz_host/firebase_options.dart';
-import 'package:quiz_host/landing_page/landing_screen.dart';
-import 'home/home_screen.dart';
+import 'package:quiz_host/src/quiz_host.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 Future<void> main()async{
   WidgetsFlutterBinding.ensureInitialized();
-  // if(!kIsWeb){
-  //   await dotenv.load(fileName:'.env');
-  // }
   try{
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform
@@ -22,57 +15,6 @@ Future<void> main()async{
     return;
   }
   runApp(
-    const QuizHostApp()
+    ProviderScope(child: const QuizHostApp())
   );
-}
-
-
-class QuizHostApp extends StatelessWidget{
-  const QuizHostApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return ProviderScope(
-      child: MaterialApp(
-        title: "Quiz Host",
-        theme: ThemeData(
-          textTheme: GoogleFonts.latoTextTheme().copyWith(
-            titleLarge: TextStyle()
-          ),
-          colorScheme: ColorScheme(
-            brightness: Brightness.light,
-            primary: const Color(0xFFF37022), // Orange
-            onPrimary: const Color(0xFFFFFFFF), // White text/icons on orange
-            secondary: const Color(0xFF051951), // Blue
-            onSecondary: const Color(0xFFFFFFFF), // White text/icons on blue
-            tertiary: const Color(0xFFF37022),
-            onTertiary: const Color(0xFF051951),
-            error: Colors.red,
-            onError: const Color(0xFFFFFFFF), // White text/icons on error
-            surface: const Color(0xFFFFFFFF), // White for cards/sheets background
-            onSurface: const Color(0xFF051951), // Blue text/icons on surface
-          ),
-          appBarTheme: AppBarTheme(
-            backgroundColor: const Color(0xFFF37022), // Orange
-            foregroundColor: const Color(0xFFFFFFFF), // White text/icons in AppBar
-            iconTheme: const IconThemeData(color: Color(0xFFFFFFFF)), // White icons
-          ),
-          scaffoldBackgroundColor: Colors.white,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-        ),
-        home: StreamBuilder(
-          stream: FirebaseAuth.instance.authStateChanges(), 
-          builder: (ctx, snap){
-            if(snap.connectionState == ConnectionState.waiting){
-              return Center(child: CircularProgressIndicator(),);
-            }
-            if(snap.hasData){
-              return HomeScreen(hostId: snap.data!.uid, hostName: snap.data!.displayName??'',);
-            }
-            return LandingScreen();
-          }
-        )
-      ),
-    );
-  }
 }

@@ -41,6 +41,22 @@ class Quiz {
       'createdOn':createdOn
     };
   }
+
+  Quiz copyWith({
+    String? quizId,
+    String? quizTitle,
+    List<Question>? questions,
+    DateTime? createdOn,
+    String? quizDescription
+  }) {
+    return Quiz(
+      quizId: quizId ?? this.quizId,
+      quizTitle: quizTitle ?? this.quizTitle,
+      questions: questions ?? this.questions,
+      createdOn: createdOn ?? this.createdOn,
+      quizDescription: quizDescription??this.quizDescription
+    );
+  }
 }
 
 class Question {

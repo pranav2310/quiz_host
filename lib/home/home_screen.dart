@@ -4,11 +4,11 @@ import 'package:quiz_host/home/dashboard.dart';
 import 'package:quiz_host/home/new_quiz.dart';
 import 'package:quiz_host/home/quiz_description.dart';
 import 'package:quiz_host/home/sidebar.dart';
-import 'package:quiz_host/models/quiz.dart';
+import 'package:quiz_host/home/sidebar_navigation_rail.dart';
 import 'package:quiz_host/provider/quiz_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({super.key, required this.hostId,required this.hostName});
+  const HomeScreen({super.key, required this.hostId, required this.hostName});
   final String hostId;
   final String hostName;
   @override
@@ -16,37 +16,48 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  Widget _buildMainArea(String mainScreen) {
+    switch (mainScreen) {
+      case 'mis':
+        return Dashboard(hostId: widget.hostId);
+      case 'new_quiz':
+        return NewQuiz(hostId: widget.hostId);
+      case 'quiz':
+        return QuizDescription(hostId: widget.hostId);
+      default:
+        return Center(child: Text('An Option from the Sidebar'));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final quizListAsync = ref.watch(quizListProvider(widget.hostId));
     final mainScreen = ref.watch(mainScreenProvider);
-    Widget mainArea(List<Quiz> quizList){
-      switch(mainScreen){
-        case 'mis':
-          return Dashboard(hostId: widget.hostId);
-        case 'new_quiz':
-          return NewQuiz(hostId: widget.hostId);
-        case 'quiz':
-          return QuizDescription(hostId: widget.hostId);
-        default:
-          return Center(child:Text('An Option from the Sidebar'));
-      }
-    }
-    return quizListAsync.when(
-      loading: ()=>const Scaffold(body: Center(child: CircularProgressIndicator(),),),
-      error: (error, _)=>Scaffold(body: Center(child: Text('Error: $error'),),),
-      data: (quizList)=>Scaffold(
-          backgroundColor: Theme.of(context).colorScheme.secondary,
-          appBar: AppBar(
-            // leading: Text('Welcome ${widget.hostName}'),
-            leadingWidth: 100,
-            title: const Text("Quiz Host"),
-          ),
-          drawer: Drawer(
-                  child: Sidebar(hostId: widget.hostId, quizList: quizList),
-                ),
-          body: mainArea(quizList)
-          )
-        );
-      }
+    return LayoutBuilder(
+      builder: (ctx, constraints){
+        if(constraints.maxWidth>=600){
+          return Scaffold(
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+            appBar: AppBar(
+              title: Text('Quiz Host'),
+            ),
+            body: Row(
+              children: [
+                SidebarNavigationRail(hostId: widget.hostId),
+                const VerticalDivider(thickness: 1,width: 1,),
+                Expanded(child: _buildMainArea(mainScreen))
+              ],
+            ),
+          );
+        }
+        else{
+          return Scaffold(
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+            appBar: AppBar(leadingWidth: 100, title: const Text("Quiz Host")),
+            drawer: Drawer(child: Sidebar(hostId: widget.hostId)),
+            body: _buildMainArea(mainScreen),
+          );
+        }
+      },
+    );
   }
+}

@@ -1,14 +1,11 @@
-import 'dart:math';
-
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:quiz_host/home/question_card.dart';
+import 'package:quiz_host/home/widgets/question_card.dart';
 import 'package:quiz_host/models/quiz.dart';
+import 'package:quiz_host/provider/dashboard_controller.dart';
 import 'package:quiz_host/provider/quiz_provider.dart';
-import 'package:quiz_host/quiz/quiz_screen.dart';
 
 class QuizDescription extends ConsumerStatefulWidget {
   const QuizDescription({
@@ -24,153 +21,6 @@ class QuizDescription extends ConsumerStatefulWidget {
 }
 
 class _QuizDescriptionState extends ConsumerState<QuizDescription> {
-  List<Question> questionCache = [];
-
-  @override
-  void initState() {
-    super.initState();
-    final selectedQuiz = ref.read(selectedQuizProvider);
-    questionCache = List.from(selectedQuiz!.questions);
-  }
-
-  Future<void> _deleteQuiz(Quiz selectedQuiz) async {
-    final shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Quiz'),
-        content: const Text(
-          'Are you sure you want to delete this quiz? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(false);
-            },
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(true);
-            },
-            child: Text('Delete'),
-          ),
-        ],
-      ),
-    );
-    if (shouldDelete != true) return;
-    try {
-      final quizRef = FirebaseDatabase.instance.ref(
-        'quiz-list/${widget.hostId}/${selectedQuiz.quizId}',
-      );
-      await quizRef.remove();
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Quiz Deleted!!!')));
-        ref.read(selectedQuizProvider.notifier).state = null;
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to Delete Quiz: $e')));
-      }
-    }
-  }
-
-  void _hostQuiz(Quiz selectedQuiz) async {
-    try {
-      final sessionRef = FirebaseDatabase.instance.ref('session');
-      final sessionSnapshot = await sessionRef.get();
-      if (sessionSnapshot.exists) {
-        final rawData = sessionSnapshot.value;
-        if (rawData is Map) {
-          final sessionData = Map<String, dynamic>.from(rawData);
-          String? existingSessionId;
-          sessionData.forEach((id, session) {
-            if (session is Map) {
-              final quizId = session['quizId']?.toString();
-              final sesstate = session['state']?.toString();
-              if (quizId == selectedQuiz.quizId &&
-                sesstate != 'ended') {
-                existingSessionId = session['sessionId']?.toString();
-              }
-            }
-          });
-          if (existingSessionId != null) {
-            if (!mounted) return;
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (ctx) => QuizScreen(
-                  playerId: 'host01',
-                  sessionId: existingSessionId!,
-                  isHost: true,
-                ),
-              ),
-            );
-            return;
-          }
-        }
-      }
-      String sessionId;
-      DatabaseReference sessionCreationRef;
-      var checkSnap;
-      do {
-        sessionId = List.generate(
-          6,
-          (_) => '0123456789'[Random().nextInt(10)],
-        ).join();
-        sessionCreationRef = FirebaseDatabase.instance.ref(
-          'session/$sessionId',
-        );
-        checkSnap = await sessionCreationRef.get();
-      } while (checkSnap.exists);
-      await sessionCreationRef.update({
-        'sessionId': sessionId,
-        'hostId': widget.hostId,
-        'quizId': selectedQuiz.quizId,
-        'currentQuestion': 0,
-        'state': 'waiting',
-        'players': {},
-        'sessionCreatedAt':ServerValue.timestamp
-      });
-      if (!mounted) return;
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (ctx) => QuizScreen(
-            playerId: 'host01',
-            sessionId: sessionId,
-            isHost: true,
-          ),
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to Create Session $e')));
-    }
-  }
-
-  Future<void> _updateAllQuestion(Quiz selectedQuiz) async {
-    final questionsRef = FirebaseDatabase.instance.ref(
-      'quiz-list/${widget.hostId}/${selectedQuiz.quizId}/questions',
-    );
-    await questionsRef.set(questionCache.map((q) => q.toJson()).toList());
-  }
-
-  Future<void> _deleteQuestionAt(int idx, Quiz selectedQuiz) async {
-    setState(() {
-      questionCache.removeAt(idx);
-    });
-    await _updateAllQuestion(selectedQuiz);
-  }
-
-  Future<void> _editQuestionAt(int idx, Question updated, Quiz selectedQuiz) async {
-    setState(() {
-      questionCache[idx] = updated;
-    });
-    await _updateAllQuestion(selectedQuiz);
-  }
 
   bool showAnswers = false;
   Set<int> editQuesIdx = {};
@@ -198,15 +48,16 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<Quiz?>(selectedQuizProvider, (prev,next){
-      if(next!=null){
-        setState(() {
-          questionCache = List.from(next.questions);
-        });
-      }
-    });
-    final selectedQuiz = ref.watch(selectedQuizProvider);
-    final quizCreationDate = selectedQuiz!.createdOn != null?DateFormat('dd MM yyyy').format(selectedQuiz.createdOn!):'Unknown Date';
+    final controller = ref.watch(dashboardControllerProvider(widget.hostId).notifier);
+    final quizNotifier = ref.watch(quizNotifierProvider(widget.hostId).notifier);
+    final quizState = ref.watch(quizNotifierProvider(widget.hostId));
+    final selectedQuiz = quizState.quiz;
+
+    if(selectedQuiz == null){
+      return const Center(child: Text('No Quiz Selected'),);
+    }
+
+    final quizCreationDate = selectedQuiz.createdOn != null?DateFormat('dd MM yyyy').format(selectedQuiz.createdOn!):'Unknown Date';
     return ListView(
       padding: EdgeInsets.all(16),
       children: [
@@ -228,7 +79,7 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
             _buildActionButton(
               icon: Icons.play_arrow,
               label: 'Host Quiz',
-              onPressed: (){_hostQuiz(selectedQuiz);},
+              onPressed: (){controller.hostQuiz(selectedQuiz);},
             ),
             _buildActionButton(
               icon: showAnswers ? Icons.visibility_off : Icons.visibility,
@@ -242,7 +93,7 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
             _buildActionButton(
               icon: Icons.delete,
               label: 'Delete Quiz',
-              onPressed: (){_deleteQuiz(selectedQuiz);},
+              onPressed: (){controller.deleteQuiz(selectedQuiz.quizId);},
             ),
           ],
         ),
@@ -262,24 +113,24 @@ class _QuizDescriptionState extends ConsumerState<QuizDescription> {
         ),
         ListView.builder(
           shrinkWrap: true,
-          itemCount: questionCache.length,
+          itemCount: selectedQuiz.questions.length,
           itemBuilder: (ctx, idx) {
             return QuestionCard(
               showAnswers: showAnswers,
               quesIdx: idx,
               quizId: selectedQuiz.quizId,
               hostId: widget.hostId,
-              question: questionCache[idx],
-              onDelete: () => _deleteQuestionAt(idx, selectedQuiz),
+              question: selectedQuiz.questions[idx],
+              onDelete: () => quizNotifier.deleteQuestion(idx),
               onSave: (updatedQuestion) =>
-                  _editQuestionAt(idx, updatedQuestion, selectedQuiz),
+                  quizNotifier.editQuestion(idx, updatedQuestion),
             );
           },
         ),
         ElevatedButton.icon(
           onPressed: (){
             setState(() {
-              questionCache.add(
+              quizNotifier.addQuestion(
                 Question(questionText: 'New Question', options: ['option','option'])
               );
             });
