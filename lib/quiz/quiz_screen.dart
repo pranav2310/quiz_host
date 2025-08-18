@@ -89,7 +89,6 @@ class _QuizScreenState extends State<QuizScreen> {
                 final currentQuestion =
                     !isFinal ? quiz.questions[currentQuestionIndex] : null;
 
-                // Safe pop after session ends
                 if (currentSessionState == 'ended') {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (mounted) Navigator.of(context).pop();
@@ -99,15 +98,18 @@ class _QuizScreenState extends State<QuizScreen> {
 
                 return Scaffold(
                   appBar: AppBar(
-                    title: Text(quiz.quizTitle),
+                    title: Text(quiz.quizTitle, style: Theme.of(context)
+                              .textTheme
+                              .titleLarge!
+                              .copyWith(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.bold),),
                     actions: [
                       TextButton(
                         child: Text(
                           'Quiz Code: ${widget.sessionId}',
                           style: Theme.of(context)
                               .textTheme
-                              .bodySmall!
-                              .copyWith(color: Theme.of(context).colorScheme.onSurface),
+                              .bodyMedium!
+                              .copyWith(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),
                         ),
                         onPressed: () {
                           Clipboard.setData(ClipboardData(text: widget.sessionId));
@@ -127,10 +129,13 @@ class _QuizScreenState extends State<QuizScreen> {
                             isHost: widget.isHost,
                           );
                         case 'displayQuestion':
+                          if(currentQuestion==null){
+                            return Center(child: Text('No question to display'),);
+                          }
                           return QuestionDisplay(
                             sessionId: widget.sessionId,
                             playerId: widget.playerId,
-                            question: currentQuestion!,
+                            question: currentQuestion,
                             currentQuestionIndex: currentQuestionIndex,
                             revealAnswer: false,
                             isHost: widget.isHost,

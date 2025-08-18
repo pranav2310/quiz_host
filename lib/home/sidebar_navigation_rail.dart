@@ -151,6 +151,7 @@ class SidebarNavigationRail extends ConsumerWidget {
                 ),
                 onPressed: () async {
                   await FirebaseAuth.instance.signOut();
+                  Navigator.of(context).pop();
                 },
                 icon: const Icon(Icons.logout),
                 label: const Text(
