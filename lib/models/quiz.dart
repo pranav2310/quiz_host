@@ -28,7 +28,7 @@ class Quiz {
       quizTitle: map['quizTitle']?.toString()??'',
       questions: questionList,
       quizDescription: map['quizDescription']?.toString()??'',
-      createdOn: map['sessionCreatedAt']!=null?DateTime.fromMillisecondsSinceEpoch(map['sessionCreatedAt']):null
+      createdOn: map['createdOn']!=null?DateTime.fromMillisecondsSinceEpoch(map['createdOn']):null
     );
   }
 
